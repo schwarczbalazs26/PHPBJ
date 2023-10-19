@@ -22,6 +22,7 @@
     $maxFileSize = 1; //MB-ben adjuk meg
     $maxFileSize = $maxFileSize * 1024 * 1024;
     $target_dir = "uploads/";
+    $imgExts = array(".jpg", ".jpeg", ".png", ".gif");
 
     function safe_input($data)
     {
@@ -57,8 +58,14 @@
             $uploadOk = 0;
         }
         if ($uploadOk == 1) {
+            foreach ($imgExts as $ext) {
+                $imgFile = $target_dir . $_POST["id"] . $ext;
+                if (file_exists($imgFile)) {
+                unlink($imgFile);
+                }
+            }
             move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file);
-        }
+    }
         $nev = safe_input(($_POST['modositandoNev']));
         if (!preg_match(" /^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/", $nev)) {
             $msg .= " A névben csak betűk és space karakterek lehetnek.";
@@ -126,7 +133,7 @@
                 $elozoOszlop++;
             }
             //van-e profilképe?
-            $imgExts = array(".jpg", ".jpeg", ".png", ".gif");
+            
             $img = false;
 
             foreach ($imgExts as $ext) {
