@@ -18,6 +18,11 @@
     <?php
     require "mysql.php";
     $msg = '';
+    $uploadOk = 0;
+    $maxFileSize = 1; //MB-ben adjuk meg
+    $maxFileSize = $maxFileSize * 1024 * 1024;
+    $target_dir = "uploads/";
+
     function safe_input($data)
     {
         $data = trim($data);
@@ -26,8 +31,34 @@
         return $data;
     }
 
+
     //ha érkezik módosításra név és id
     if (!empty($_POST['modositandoNev']) and isset($_POST['id'])) {
+
+        $fileName = basename($_FILES["fileToUpload"]["name"]);
+
+        $fileNameArray = preg_split("/\./", $fileName);
+
+        $fileName = ($_POST['id']) . '.' . $fileNameArray[1];
+
+        $target_file = $target_dir . $fileName;
+
+        if ($_FILES["fileToUpload"]["size"] > $maxFileSize) {
+            $msg .= "A feltöltött fájl túl nagy méretű.";
+            $uploadOk = 0;
+        }
+
+        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+        if ($check !== false) {
+            //          echo "File is an image - " . $check["mime"] . ".";
+            $uploadOk = 1;
+        } else {
+            $msg .= "A feltöltött " . $_FILES["fileToUpload"]["name"] . " fájl nem kép.";
+            $uploadOk = 0;
+        }
+        if ($uploadOk == 1) {
+            move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file);
+        }
         $nev = safe_input(($_POST['modositandoNev']));
         if (!preg_match(" /^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/", $nev)) {
             $msg .= " A névben csak betűk és space karakterek lehetnek.";
@@ -94,10 +125,25 @@
                 echo '<td class="tolto"></td>';
                 $elozoOszlop++;
             }
+            //van-e profilképe?
+            $imgExts = array(".jpg", ".jpeg", ".png", ".gif");
+            $img = false;
+
+            foreach ($imgExts as $ext) {
+                $imgFile = $target_dir . $row["id"] . $ext;
+                if (file_exists($imgFile)) {
+                    $img = '<img src="' . $imgFile . '" style="width:50px;"><br>';
+                    break;
+                }
+            }
+
+
 
             //kiírjuk az adott sor adott oszlop taunlóját
             echo '<td class="' . $class . '">';
-            echo '<a href="index.php?id=' . $row["id"] . '">' . $row['nev'] . '</a';
+            echo '<a href="index.php?id=' . $row["id"] . '">';
+            if ($img) echo $img;
+            echo $row['nev'];
             echo '</td>';
             if ($row['sor'] == 0) {
                 if ($row['oszlop'] == 0) {
@@ -123,10 +169,11 @@
 
     //adat módosító form, ha jött GET id és az létezik is
     if ($modositandoNev) {
-        echo '<form action="index.php" method="post">';
+        echo '<form action="index.php" method="post" enctype="multipart/form-data">';
         echo '<input type="text" name="modositandoNev" value="' . $modositandoNev . '">';
         echo '<input type="hidden" name="id" value="' . $_GET['id'] . '">';
         echo '<input type="submit" value="Módosítás">';
+        echo '<br> <input type="file" name="fileToUpload" id="fileToUpload">';
         echo '</form>';
     }
 
