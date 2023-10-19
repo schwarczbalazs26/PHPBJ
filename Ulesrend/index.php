@@ -32,15 +32,14 @@
         if (!preg_match(" /^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/", $nev)) {
             $msg .= " A névben csak betűk és space karakterek lehetnek.";
         }
-        if (mb_strlen($nev) > 100){
+        if (mb_strlen($nev) > 100) {
             $msg .= " A név max 100 karakter lehet.";
-        }
-        elseif (mb_strlen($nev) < 5){
+        } elseif (mb_strlen($nev) < 5) {
             $msg .= " A névben minimum 5 karakternek kell lennie.";
         }
-      if(empty($nev)){
-        $msg = " Csak space nem lehet a névben.";
-      }
+        if (empty($nev)) {
+            $msg = " Csak space nem lehet a névben.";
+        }
         if ($msg == '') {
             $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_POST['id'];
             if ($result = $conn->query($sql)) {
