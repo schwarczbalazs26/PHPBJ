@@ -33,8 +33,34 @@
     }
 
 
+
+    //ha érkezik login adat
+    if (isset($_POST['felhasznalonev']) and isset($_POST['jelszo'])) {
+        if (empty($_POST['felhasznalonev'])) {
+            $msg .= "A felhasználónév nem került megadásra.";
+        }
+        if (empty($_POST['jelszo'])) {
+            $msg .= "A jelszó nem került megadásra.";
+        }
+        if(!$msg){
+            $sql = "SELECT jelszo FROM osztaly WHERE felhasznalonev = '". $_POST['felhasznalonev'] ."'";
+            $result = $conn->query($sql);
+        if($result->num_rows > 0){
+                while($row = $result->fetch_assoc()){
+                    if($row['jelszo']== md5($_POST['jelszo'])){
+                        echo "Felhasználó belépett.";
+                    }else{
+                        $msg .= "A felhasználóhoz megadott jelszó nem helyes.";
+                    }
+                }
+            }else{
+                $msg .= "A megadott ".$_POST['felhasznalonev']." felhasználónév nem található.";
+            }
+        }
+
+    }
     //ha érkezik módosításra név és id
-    if (!empty($_POST['modositandoNev']) and isset($_POST['id'])) {
+    elseif (isset($_POST['modositandoNev']) and isset($_POST['id'])) {
 
         $fileName = basename($_FILES["fileToUpload"]["name"]);
 
@@ -61,11 +87,11 @@
             foreach ($imgExts as $ext) {
                 $imgFile = $target_dir . $_POST["id"] . $ext;
                 if (file_exists($imgFile)) {
-                unlink($imgFile);
+                    unlink($imgFile);
                 }
             }
             move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file);
-    }
+        }
         $nev = safe_input(($_POST['modositandoNev']));
         if (!preg_match(" /^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/", $nev)) {
             $msg .= " A névben csak betűk és space karakterek lehetnek.";
@@ -133,7 +159,7 @@
                 $elozoOszlop++;
             }
             //van-e profilképe?
-            
+    
             $img = false;
 
             foreach ($imgExts as $ext) {
@@ -149,7 +175,8 @@
             //kiírjuk az adott sor adott oszlop taunlóját
             echo '<td class="' . $class . '">';
             echo '<a href="index.php?id=' . $row["id"] . '">';
-            if ($img) echo $img;
+            if ($img)
+                echo $img;
             echo $row['nev'];
             echo '</td>';
             if ($row['sor'] == 0) {
@@ -182,6 +209,16 @@
         echo '<input type="submit" value="Módosítás">';
         echo '<br> <input type="file" name="fileToUpload" id="fileToUpload">';
         echo '</form>';
+    } else {
+        ?>
+        <form action="index.php" method="post" enctype="multipart/form-data">
+            Felhasználónév: <br><input type="text" name="felhasznalonev" value="" required><br>
+            Jelszó: <br><input type="password" name="jelszo" required><br>
+            <input type="submit" value="BELÉPÉS">
+        </form>
+        <?php
+
+
     }
 
     ?>
