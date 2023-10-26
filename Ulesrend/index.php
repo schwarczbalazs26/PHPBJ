@@ -1,3 +1,16 @@
+<?php
+
+require "mysql.php";
+session_start();
+
+if (isset($_GET['action'])) {
+    if ($_GET['action'] == 'logout') {
+        session_unset();
+    }
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="hu">
 
@@ -12,11 +25,7 @@
 
 <body>
 
-
-
-
     <?php
-    require "mysql.php";
     $msg = '';
     $uploadOk = 0;
     $maxFileSize = 1; //MB-ben adjuk meg
@@ -32,8 +41,6 @@
         return $data;
     }
 
-
-
     //ha érkezik login adat
     if (isset($_POST['felhasznalonev']) and isset($_POST['jelszo'])) {
         if (empty($_POST['felhasznalonev'])) {
@@ -42,31 +49,33 @@
         if (empty($_POST['jelszo'])) {
             $msg .= "A jelszó nem került megadásra.";
         }
-        if(!$msg){
-            $sql = "SELECT jelszo FROM osztaly WHERE felhasznalonev = '". $_POST['felhasznalonev'] ."'";
+        if (!$msg) {
+            $sql = "SELECT jelszo, id, nev FROM osztaly WHERE felhasznalonev = '" . $_POST['felhasznalonev'] . "'";
             $result = $conn->query($sql);
-        if($result->num_rows > 0){
-                while($row = $result->fetch_assoc()){
-                    if($row['jelszo']== md5($_POST['jelszo'])){
-                        echo "Felhasználó belépett.";
-                    }else{
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    if ($row['jelszo'] == md5($_POST['jelszo'])) {
+                        $_SESSION['felhasznalonev'] = $_POST['felhasznalonev'];
+                        $_SESSION['nev'] = $row['nev'];
+                        $_SESSION['id'] = $row['id'];
+                    } else {
                         $msg .= "A felhasználóhoz megadott jelszó nem helyes.";
                     }
                 }
-            }else{
-                $msg .= "A megadott ".$_POST['felhasznalonev']." felhasználónév nem található.";
+            } else {
+                $msg .= "A megadott " . $_POST['felhasznalonev'] . " felhasználónév nem található.";
             }
         }
 
     }
     //ha érkezik módosításra név és id
-    elseif (isset($_POST['modositandoNev']) and isset($_POST['id'])) {
+    elseif (isset($_POST['modositandoNev']) and isset($_SESSION['id'])) {
 
         $fileName = basename($_FILES["fileToUpload"]["name"]);
 
         $fileNameArray = preg_split("/\./", $fileName);
 
-        $fileName = ($_POST['id']) . '.' . $fileNameArray[1];
+        $fileName = ($_SESSION['id']) . '.' . $fileNameArray[1];
 
         $target_file = $target_dir . $fileName;
 
@@ -77,7 +86,6 @@
 
         $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
         if ($check !== false) {
-            //          echo "File is an image - " . $check["mime"] . ".";
             $uploadOk = 1;
         } else {
             $msg .= "A feltöltött " . $_FILES["fileToUpload"]["name"] . " fájl nem kép.";
@@ -85,7 +93,7 @@
         }
         if ($uploadOk == 1) {
             foreach ($imgExts as $ext) {
-                $imgFile = $target_dir . $_POST["id"] . $ext;
+                $imgFile = $target_dir . $_SESSION["id"] . $ext;
                 if (file_exists($imgFile)) {
                     unlink($imgFile);
                 }
@@ -105,7 +113,7 @@
             $msg = " Csak space nem lehet a névben.";
         }
         if ($msg == '') {
-            $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_POST['id'];
+            $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_SESSION['id'];
             if ($result = $conn->query($sql)) {
                 $msg = "A név módosításra került";
             } else {
@@ -117,15 +125,12 @@
             }
         }
     }
-    /*  } else {
-    $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_POST['id'];
-    if ($$msg = '') {
-    $msg = "A név módosításra került.";
-    } else {
-    $msg = "A név nem került módosításra.";
+
+    if (isset($_SESSION['felhasznalonev'])) {
+        echo "Üdv " . $_SESSION['felhasznalonev'] . "!";
+        echo ' <a href="index.php?action=logout">KILÉPÉS >> </a>';
     }
-    }
-    */
+
     if (isset($msg)) {
         echo "<h2>$msg</h2>";
     }
@@ -182,10 +187,6 @@
             if ($row['sor'] == 0) {
                 if ($row['oszlop'] == 0) {
                     echo '<td rowspan="4" class="tolto" style="width 40px;"></td>';
-
-                    /*  } else if ($row['oszlop'] == 2) {
-                    echo '<td rowspan="3" class="tolto"></td>';
-                    */
                 }
             }
             $elozoOszlop = $row['oszlop'];
@@ -201,11 +202,11 @@
     <hr>
     <?php
 
-    //adat módosító form, ha jött GET id és az létezik is
-    if ($modositandoNev) {
+    // if ($modositandoNev) {
+    if (isset($_SESSION['felhasznalonev'])) {
         echo '<form action="index.php" method="post" enctype="multipart/form-data">';
-        echo '<input type="text" name="modositandoNev" value="' . $modositandoNev . '">';
-        echo '<input type="hidden" name="id" value="' . $_GET['id'] . '">';
+        echo '<input type="text" name="modositandoNev" value="' . $_SESSION['nev'] . '">';
+     //   echo '<input type="hidden" name="id" value="' . $_SESSION['id'] . '">';
         echo '<input type="submit" value="Módosítás">';
         echo '<br> <input type="file" name="fileToUpload" id="fileToUpload">';
         echo '</form>';
