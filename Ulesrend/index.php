@@ -1,7 +1,12 @@
 <?php
+session_start();
+
+define ('TARGET_DIR','uploads/');
+define ('IMG_EXTS',array('.jpg', 'jpeg', '.png', '.gif', '.jfif'));
 
 require "mysql.php";
-session_start();
+require "model/files.php";
+
 
 if (isset($_GET['action'])) {
     if ($_GET['action'] == 'logout') {
@@ -27,11 +32,6 @@ if (isset($_GET['action'])) {
 
     <?php
     $msg = '';
-    $uploadOk = 0;
-    $maxFileSize = 1; //MB-ben adjuk meg
-    $maxFileSize = $maxFileSize * 1024 * 1024;
-    $target_dir = "uploads/";
-    $imgExts = array(".jpg", ".jpeg", ".png", ".gif");
 
     function safe_input($data)
     {
@@ -71,35 +71,10 @@ if (isset($_GET['action'])) {
     //ha érkezik módosításra név és id
     elseif (isset($_POST['modositandoNev']) and isset($_SESSION['id'])) {
 
-        $fileName = basename($_FILES["fileToUpload"]["name"]);
-
-        $fileNameArray = preg_split("/\./", $fileName);
-
-        $fileName = ($_SESSION['id']) . '.' . $fileNameArray[1];
-
-        $target_file = $target_dir . $fileName;
-
-        if ($_FILES["fileToUpload"]["size"] > $maxFileSize) {
-            $msg .= "A feltöltött fájl túl nagy méretű.";
-            $uploadOk = 0;
+        if(!empty($_FILES["fileToUpload"]["name"])){
+            $msg = fileUpload($msg);
         }
 
-        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-        if ($check !== false) {
-            $uploadOk = 1;
-        } else {
-            $msg .= "A feltöltött " . $_FILES["fileToUpload"]["name"] . " fájl nem kép.";
-            $uploadOk = 0;
-        }
-        if ($uploadOk == 1) {
-            foreach ($imgExts as $ext) {
-                $imgFile = $target_dir . $_SESSION["id"] . $ext;
-                if (file_exists($imgFile)) {
-                    unlink($imgFile);
-                }
-            }
-            move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file);
-        }
         $nev = safe_input(($_POST['modositandoNev']));
         if (!preg_match(" /^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/", $nev)) {
             $msg .= " A névben csak betűk és space karakterek lehetnek.";
@@ -112,115 +87,53 @@ if (isset($_GET['action'])) {
         if (empty($nev)) {
             $msg = " Csak space nem lehet a névben.";
         }
-        if ($msg == '') {
-            $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_SESSION['id'];
-            if ($result = $conn->query($sql)) {
-                $msg = "A név módosításra került";
-            } else {
-                $msg = "A név nem került módosításra.";
-                if ($conn->error) {
-                    echo $conn->error;
-                    echo $sql;
-                }
-            }
+        if($msg == ''){
+            include "model/osztaly.php";
+            $msg = updateOsztaly($conn);
         }
     }
 
+    echo '<a href="index.php">ÜLÉSREND</a> | ';
+
     if (isset($_SESSION['felhasznalonev'])) {
+        echo ' <a href="index.php?action=datamod">ADATMÓDOSÍTÁS</a> | ';
         echo "Üdv " . $_SESSION['felhasznalonev'] . "!";
-        echo ' <a href="index.php?action=logout">KILÉPÉS >> </a>';
+        echo ' <a href="index.php?action=logout">KILÉPÉS>> </a>';
+    }
+    else{
+        echo ' <a href="index.php?action=login"> BELÉPÉS </a>';
     }
 
     if (isset($msg)) {
         echo "<h2>$msg</h2>";
     }
-
-
-    $sql = "SELECT id, nev, sor, oszlop FROM `osztaly` ORDER BY sor, oszlop;";
-    $result = $conn->query($sql);
-    if ($result->num_rows > 0) {
-        echo '<table id="terem">';
-        $sorId = NULL;
-        $modositandoNev = "";
-        while ($row = $result->fetch_assoc()) {
-            $class = "tanulo";
-            if ($row['sor'] == 3 && $row['oszlop'] == 3) {
-                $class = "tanar";
-            }
-            if ($row['id'] == 1) {
-                $class = "sajatMagam";
-            }
-            if ($row['sor'] != $sorId) {
-                if ($sorId != NULL) {
-                    echo "</tr>";
-                }
-                echo "      <tr>";
-                $sorId = $row["sor"];
-                $elozoOszlop = -1;
-            }
-            //kiírjuk az adott sor üres mezejét
-            while ($row['oszlop'] != $elozoOszlop + 1) {
-                echo '<td class="tolto"></td>';
-                $elozoOszlop++;
-            }
-            //van-e profilképe?
-    
-            $img = false;
-
-            foreach ($imgExts as $ext) {
-                $imgFile = $target_dir . $row["id"] . $ext;
-                if (file_exists($imgFile)) {
-                    $img = '<img src="' . $imgFile . '" style="width:50px;"><br>';
-                    break;
-                }
-            }
-
-
-
-            //kiírjuk az adott sor adott oszlop taunlóját
-            echo '<td class="' . $class . '">';
-            echo '<a href="index.php?id=' . $row["id"] . '">';
-            if ($img)
-                echo $img;
-            echo $row['nev'];
-            echo '</td>';
-            if ($row['sor'] == 0) {
-                if ($row['oszlop'] == 0) {
-                    echo '<td rowspan="4" class="tolto" style="width 40px;"></td>';
-                }
-            }
-            $elozoOszlop = $row['oszlop'];
-            if (isset($_GET["id"])) {
-                if ($row["id"] == $_GET["id"]) {
-                    $modositandoNev = $row['nev'];
-                }
-            }
-        }
-    }
     ?>
-    </table>
     <hr>
     <?php
-
-    // if ($modositandoNev) {
+    
     if (isset($_SESSION['felhasznalonev'])) {
-        echo '<form action="index.php" method="post" enctype="multipart/form-data">';
-        echo '<input type="text" name="modositandoNev" value="' . $_SESSION['nev'] . '">';
-     //   echo '<input type="hidden" name="id" value="' . $_SESSION['id'] . '">';
-        echo '<input type="submit" value="Módosítás">';
-        echo '<br> <input type="file" name="fileToUpload" id="fileToUpload">';
-        echo '</form>';
+        include "view/datamod.php";
     } else {
-        ?>
-        <form action="index.php" method="post" enctype="multipart/form-data">
-            Felhasználónév: <br><input type="text" name="felhasznalonev" value="" required><br>
-            Jelszó: <br><input type="password" name="jelszo" required><br>
-            <input type="submit" value="BELÉPÉS">
-        </form>
-        <?php
-
-
+        include "view/login.php";
     }
+
+    $action = $_GET['action'] ?? FALSE;
+
+    switch ($action){
+        case 'login':
+            include_once "view/login.php";
+        break;
+        case 'datamod':
+            include_once "view/datamod.php";
+        break;
+    
+        default:
+            require_once "model/osztaly.php";
+            $result = getOsztaly($conn);
+            if ($result-> num_rows > 0) {
+                include "view/index.php";
+    }
+}
 
     ?>
 
