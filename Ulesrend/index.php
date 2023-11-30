@@ -5,8 +5,10 @@ session_start();
 define('TARGET_DIR',"uploads/");
 define('IMG_EXTS', array('.jpg','.jpeg','.png','.gif'));
 
-require "mysql.php";
+require "helpers/mysql.php";
+$db = new DataBase;
 require "model/files.php";
+require "helpers/stringhelper.php";
 
 if(isset($_GET['action'])) {
     if($_GET['action'] == 'logout') {
@@ -19,103 +21,20 @@ if(isset($_GET['action'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ülésrend</title>
-    <link rel="stylesheet" href="index.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 <?php
 
-function safe_input($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
-  }
+require 'controller/osztaly.php';
+include 'view/menu.php';
 
-$msg = ''; 
-
-
-if(isset($_POST['felhasznalonev']) and isset($_POST['jelszo'])) {
-    // ha érkezik login adat
-    if(empty($_POST['felhasznalonev'])) $msg .= "A felhasználónév nem került megadásra. ";
-    if(empty($_POST['jelszo'])) $msg .= "A jelszó nem került megadásra. ";
-    if(!$msg) {
-        $sql = "SELECT jelszo, id, nev FROM osztaly WHERE felhasznalonev = '".$_POST['felhasznalonev']."';";
-        $result = $conn->query($sql);
-
-        if ($result->num_rows > 0) {
-            if($row = $result->fetch_assoc()) {
-                if($row['jelszo'] == md5($_POST['jelszo'])) {
-                    $_SESSION['felhasznalonev'] = $_POST['felhasznalonev'];
-                    $_SESSION['nev'] = $row['nev'];
-                    $_SESSION['id'] = $row['id'];
-                }
-                else {
-                    $msg .= "A felhasználóhoz megadott jelszó nem érvényes. ";
-                }
-            }
-        }
-        else {
-            $msg .= "A megadott ".$_POST['felhasznalonev']." felhasználónév nem található. ";
-        }
-    }
-}
-// ha érkezik módosításra név és id
-elseif(isset($_POST['modositandoNev']) and isset($_SESSION['id'])) {
-
-    if(!empty($_FILES["fileToUpload"]["name"])) {
-        $msg = fileUpload($msg);
-    }
-
-    $nev = safe_input($_POST['modositandoNev']);
-
-    if(empty($nev)) {
-        $msg .= "A névben csak space karakterek nem lehetnek. ";
-    }
-    if (!preg_match("/^[a-záéíóöőúüűÁÉÍÓÖŐÚÜŰA-Z-' ]*$/",$nev)) {
-        $msg .= "A névben csak betűk és space karakterek lehetnek. ";
-    }
-    if (mb_strlen($nev) > 100) {
-        $msg .= "A névben maximum 100 karakter lehet. ";
-    }
-    elseif (mb_strlen($nev) < 5) {
-        $msg .= "A névben minimum 5 karakternek kell lennie. ";
-    }
-
-    if ($msg == '') {
-        require "model/osztaly.php";
-        $msg = updateOsztaly($conn);
-    }
-}
-echo '<a href="index.php"> ÜLÉSREND </a> | ';
-if(isset($_SESSION['felhasznalonev'])) {
-    echo '<a href="index.php?action=datamod"> ADATMÓDOSÍTÁS </a> | ';
-    echo "ÜDV ".$_SESSION['felhasznalonev']."! ";
-    echo '<a href="index.php?action=logout">KILÉPÉS >> </a>';
-}
-else echo '<a href="index.php?action=login"> BELÉPÉS </a>';
-
-if(isset($msg)) echo "<h2>$msg</h2>";
-
-$action = $_GET['action'] ?? FALSE;
-
-switch($action) {
-    case 'login':
-        include "view/login.php";
-    break;
-
-    case 'datamod':
-        include "view/datamod.php";
-    break;
-
-    default:
-        require_once "model/osztaly.php";
-        $result = getOsztaly($conn);
-        if ($result->num_rows > 0) {
-            include "view/index.php";
-        }
-}
+renderView($osztaly);
 
 ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -1,0 +1,56 @@
+td {
+    border: 1px solid black;
+    background-color: beige;
+    width: 200px;
+}
+
+tr {
+    height: 100px;
+}
+.balra {
+    position: fixed;
+    top: 10px;
+}
+.tanari{
+    position: fixed;
+    left: 900px;
+    top: 520px;
+}
+.kozepso {
+    position: fixed;
+    left: 350px;
+    top: 10px;
+}
+
+.kozepso2 {
+    position: fixed;
+    left: 550px;
+    top: 10px;
+}
+
+.jobb {
+    position: fixed;
+    left: 900px;
+    top: 10px;
+}
+
+.jobb2 {
+    position: fixed;
+    left: 1100px;
+    top: 10px;
+}
+
+.center {
+    margin: auto;
+    text-align: center;
+    width: 100%;
+}
+.tolto{
+    visibility: hidden;
+}
+.tanar{
+    background-color: blanchedalmond;
+}
+.sajatMagam{
+    background-color: aquamarine;
+}

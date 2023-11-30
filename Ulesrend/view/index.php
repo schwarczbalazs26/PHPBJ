@@ -27,13 +27,13 @@
     foreach(IMG_EXTS as $ext) {
         $imgFile = TARGET_DIR . $row["id"].$ext;
         if (file_exists($imgFile)) {
-            $img = '<img src="'.$imgFile.'" style="width: 50px;"><br>';
+            $img = '<img src="'.$imgFile.'?time='.time().'" style="width: 50px;"><br>';
             break;
         }
     }
     // kiírjuk az adott sor adott oszlop tanulóját
     echo '<td class="'.$class.'">';
-    echo '<a href="index.php?id='.$row["id"].'">';
+    echo '<a href="index.php?action=user&id='.$row["id"].'">';
     if($img) echo $img;
     echo $row['nev'];
     echo '</a>';

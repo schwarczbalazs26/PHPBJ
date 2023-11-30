@@ -1,26 +1,61 @@
 <?php
 
-function getOsztaly($conn){
+class Osztaly {
 
-    $sql = "SELECT id, nev, sor, oszlop FROM `osztaly` ORDER BY sor, oszlop;";
-    $result = $conn->query($sql);
+    function getOsztaly() {
     
-    return $result;
-}
+        $sql = "SELECT id, nev, sor, oszlop FROM osztaly ORDER BY sor, oszlop;";
+        $result = DataBase::$conn->query($sql);
+        
+        return $result;
+    }
 
-function updateOsztaly($conn){
+    function getUser($id) {
+        $sql = "SELECT nev, sor, oszlop FROM osztaly WHERE id =".$id;
+        $result = DataBase::$conn->query($sql);
+        
+        return $result;
+    }
+    
+    function updateOsztaly() {
+        $sql = "UPDATE osztaly SET nev = '".$_POST['modositandoNev']."' WHERE id = ".$_SESSION['id'];
+        if($result = DataBase::$conn->query($sql)) {
+            $msg = "A név módosításra került";
+        }
+        else {
+            $msg = "A név nem került módosításra";
+            if(DataBase::$conn->error) {
+                echo DataBase::$conn->error;
+                echo $sql;
+            }
+        }
+        return $msg;
+    }
 
-    $sql = "UPDATE osztaly SET nev = '" . $_POST['modositandoNev'] . "' WHERE id= " . $_SESSION['id'];
-            if ($result = $conn->query($sql)) {
-                $msg = "A név módosításra került";
-            } else {
-                $msg = "A név nem került módosításra.";
-                if ($conn->error) {
-                    echo $conn->error;
-                    echo $sql;
+    /**
+     * ellenőrzi a felhasználót, belépteti, sessiont ír, vagy hibát ad vissza
+     */
+    function checkLogin($msg) {
+        $sql = "SELECT jelszo, id, nev FROM osztaly WHERE felhasznalonev = '".$_POST['felhasznalonev']."';";
+        $result = DataBase::$conn->query($sql);
+
+        if ($result->num_rows > 0) {
+            if($row = $result->fetch_assoc()) {
+                if($row['jelszo'] == md5($_POST['jelszo'])) {
+                    $_SESSION['felhasznalonev'] = $_POST['felhasznalonev'];
+                    $_SESSION['nev'] = $row['nev'];
+                    $_SESSION['id'] = $row['id'];
+                }
+                else {
+                    $msg .= "A felhasználóhoz megadott jelszó nem érvényes. ";
                 }
             }
-            return $msg;
         }
+        else {
+            $msg .= "A megadott ".$_POST['felhasznalonev']." felhasználónév nem található. ";
+        }
+        return $msg;
+    }
+}
 
 ?>

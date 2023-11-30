@@ -1,2 +1,2 @@
-ALTER TABLE `osztaly` ADD `felhasznalonev` VARCHAR(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL AFTER `oszlop`, ADD `jelszo` VARCHAR(32) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL AFTER `felhasznalonev`;
-ALTER TABLE `osztaly` ADD UNIQUE(`felhasznalonev`);
+ALTER TABLE `osztaly` ADD `felhasznalonev` VARCHAR(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL AFTER `oszlop`, ADD `jelszo` VARCHAR(32) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL AFTER `felhasznalonev`; 
+ALTER TABLE `osztaly` ADD UNIQUE(`felhasznalonev`); 
