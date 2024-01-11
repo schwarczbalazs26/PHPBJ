@@ -33,8 +33,8 @@ else {
 ?>
       </ul>
       <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Keresés" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Keresés</button>
+        <input class="form-control me-2" type="search" placeholder="Keresés" aria-label="Search" onkeyup="showResult(this.value)">
+        <div id="livesearch"></div>
       </form>
     </div>
   </div>

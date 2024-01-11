@@ -1,24 +1,23 @@
 <?php
-
 class Osztaly {
 
     function getOsztaly() {
     
-        $sql = "SELECT id, nev, sor, oszlop FROM osztaly ORDER BY sor, oszlop;";
+        $sql = "SELECT id, nev, sor, oszlop FROM ". DB_PREFIX . "_osztaly ORDER BY sor, oszlop;";
         $result = DataBase::$conn->query($sql);
         
         return $result;
     }
 
     function getUser($id) {
-        $sql = "SELECT nev, sor, oszlop FROM osztaly WHERE id =".$id;
+        $sql = "SELECT nev, sor, oszlop FROM ". DB_PREFIX . "_osztaly WHERE id =".$id;
         $result = DataBase::$conn->query($sql);
         
         return $result;
     }
     
     function updateOsztaly() {
-        $sql = "UPDATE osztaly SET nev = '".$_POST['modositandoNev']."' WHERE id = ".$_SESSION['id'];
+        $sql = "UPDATE ". DB_PREFIX . "_osztaly SET nev = '".$_POST['modositandoNev']."' WHERE id = ".$_SESSION['id'];
         if($result = DataBase::$conn->query($sql)) {
             $msg = "A név módosításra került";
         }
@@ -36,7 +35,7 @@ class Osztaly {
      * ellenőrzi a felhasználót, belépteti, sessiont ír, vagy hibát ad vissza
      */
     function checkLogin($msg) {
-        $sql = "SELECT jelszo, id, nev FROM osztaly WHERE felhasznalonev = '".$_POST['felhasznalonev']."';";
+        $sql = "SELECT jelszo, id, nev FROM ". DB_PREFIX . "_osztaly WHERE felhasznalonev = '".$_POST['felhasznalonev']."';";
         $result = DataBase::$conn->query($sql);
 
         if ($result->num_rows > 0) {
